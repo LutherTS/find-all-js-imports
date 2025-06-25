@@ -37,7 +37,7 @@ const data = {
   }),
 };
 
-const ignores = ["README.md"];
+const ignores = [];
 
 const config = {
   data,

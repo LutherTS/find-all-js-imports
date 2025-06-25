@@ -2,8 +2,13 @@
   "name": "find-all-js-imports",
   "version": "1.0.0",
   "description": "Finds all JavaScript/TypeScript import paths recursively related to a given JS/TS file path.",
+  "keywords": [
+    "javascript",
+    "typescript",
+    "imports"
+  ],
   "license": "MIT",
-  "author": "",
+  "author": "Luther Tchofo Safo <luther@tchofo-safo-portfolio.me>",
   "type": "module",
   "main": "index.js",
   "scripts": {

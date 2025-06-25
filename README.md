@@ -1,70 +1,6 @@
-import fs from "fs";
-import path from "path";
+Still another utility that I am bound to reuse between open-source projects. Here is the code with JSDoc comments:
 
-import { resolveImportingPath } from "resolve-importing-path";
-import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
-
-/**
- * @typedef {{
- *   success: false;
- *   errors: Array<{ message: string; type: "warning";}>;
- * } | {
- *   success: true;
- *   visitedSet: Set<string>;
- * }} FindAllImportsResults
- */
-
-// success objects
-export const successFalse = Object.freeze({
-  success: false,
-});
-export const successTrue = Object.freeze({
-  success: true,
-});
-
-// error objects
-export const typeWarning = Object.freeze({
-  type: "warning",
-});
-
-// IMPORTANT. findAllImports needs to be able to take a callback function that it can play at every recursion to find the corresponding value for go-to-definitions. But that's on the roadmap, not in the first release. The first implementation of this pinpoint go-to-definition mechanism will be made by analyzing each path obtained rather than by doing so as the paths are being obtained.
-
-/**
- * Processes recursively and resolves a single import path. (Unlike `findAllImports`, here `currentDir`, `cwd`, `visitedSet`, `depth`, and `maxDepth` aren't options because they are mandatory and not pre-parameterized.)
- * @param {string} importPath The import path currently being addressed.
- * @param {Object} settings The required settings as follows:
- * @param {string} settings.currentDir The directory containing the import path currently being addressed.
- * @param {string} settings.cwd The current working directory.
- * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
- * @param {number} settings.depth The current depth of the recursion.
- * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
- * @returns The results of the embedded round of `findAllImports`, since `findAllImports`'s recursion happens within `processImport`.
- */
-const processImport = (
-  importPath,
-  { currentDir, cwd, visitedSet, depth, maxDepth }
-) => {
-  // Resolves the provided import path.
-  const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
-  // Returns true early to skip processing on unresolved paths.
-  if (!resolvedPath) return { ...successTrue, visitedSet };
-
-  // Establishes the options for the next round of findAllImports.
-  const findAllImportsOptions = {
-    cwd,
-    visitedSet,
-    depth: depth + 1,
-    maxDepth,
-  };
-
-  // Runs findAllImports on the imported path resolved, thus recursively.
-  const findAllImportsResults = /** @type {FindAllImportsResults} */ (
-    findAllImports(resolvedPath, findAllImportsOptions)
-  );
-  // Returns true if the round of findAllImports succeeded, false if it failed.
-  return findAllImportsResults;
-};
-
+```js
 /**
  * Finds all import paths recursively related to a given file path.
  * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
@@ -172,3 +108,4 @@ export const findAllImports = (
 
   return { ...successTrue, visitedSet };
 };
+```
