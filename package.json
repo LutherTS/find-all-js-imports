@@ -1,0 +1,16 @@
+{
+  "name": "find-all-js-imports",
+  "version": "1.0.0",
+  "description": "Finds all JavaScript/TypeScript import paths recursively related to a given JS/TS file path.",
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "get-sourcecode-from-file-path": "^1.1.2",
+    "resolve-importing-path": "^1.0.3"
+  }
+}
