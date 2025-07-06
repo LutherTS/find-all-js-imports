@@ -21,7 +21,7 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
  * } | {
  *   success: true;
  *   visitedSet: Set<string>;
- *   accumulator: unknown
+ *   accumulator: unknown;
  * }} FindAllImportsResultsWithAccumulator
  */
 
@@ -33,8 +33,8 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
  *     accumulator: unknown,
  *     depth: number,
  *     maxDepth: number
- *   ) => void,
- *   accumulator: unknown
+ *   ) => void;
+ *   accumulator: unknown;
  * }} SynchronousCallbackConfig
  */
 
