@@ -5,9 +5,14 @@ import { resolveImportingPath } from "resolve-importing-path";
 import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
 
 /**
+ * @typedef {"error" | "warning"} ErrorOrWarning
+ * @typedef {import('eslint').SourceCode} SourceCode
+ */
+
+/**
  * @typedef {{
  *   success: false;
- *   errors: Array<{ message: string; type: "warning";}>;
+ *   errors: Array<{ message: string; type: ErrorOrWarning;}>;
  * } | {
  *   success: true;
  *   visitedSet: Set<string>;
@@ -17,7 +22,7 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
 /**
  * @typedef {{
  *   success: false;
- *   errors: Array<{ message: string; type: "error" | "warning";}>;
+ *   errors: Array<{ message: string; type: ErrorOrWarning;}>;
  * } | {
  *   success: true;
  *   visitedSet: Set<string>;
@@ -29,7 +34,7 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
  * @typedef {{
  *   callback: (
  *     filePath: string,
- *     sourceCode: import('eslint').SourceCode,
+ *     sourceCode: SourceCode,
  *     accumulator: unknown,
  *   ) => void;
  *   accumulator: unknown;
@@ -40,7 +45,7 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
  * @typedef {{
  *   callback: (
  *     filePath: string,
- *     sourceCode: import('eslint').SourceCode,
+ *     sourceCode: SourceCode,
  *     accumulator: unknown,
  *   ) => Promise<void>,
  *   accumulator: unknown
@@ -63,7 +68,12 @@ export const typeWarning = Object.freeze({
   type: "warning",
 });
 
-/* helpers */
+/* helpers
+ * First, make sure they work.
+ * Second, make params' types.
+ * Third, make their JSDoc.
+ * Fourth, make their own files in a new library/ directory.
+ */
 
 const makeIsSupposedToBe = (paramName, paramKind) =>
   `${paramName} is supposed to be ${paramKind}.`;
@@ -131,6 +141,7 @@ export const validateFilePathAndOptions = (
 
   // Then validates filePath and options with zod.
   // (To be done.)
+  const visitedSetManuallyTyped = /** @type {Set<string>} */ (visitedSet); // temporarily
 
   // Fails early if max depth is recursively reached.
   if (depth > maxDepth) {
@@ -177,16 +188,33 @@ export const validateFilePathAndOptions = (
     ...successTrue,
     filePath,
     cwd,
-    visitedSet,
+    visitedSet: visitedSetManuallyTyped,
     depth,
     maxDepth,
     sourceCode,
   };
 };
 
-export const updateVisitedSet = (visitedSet, filePath) =>
+/**
+ *
+ * @param {Set<string>} visitedSet The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @returns
+ */
+export const updateVisitedSet = (visitedSet, filePath) => {
   visitedSet.add(filePath);
+};
 
+/**
+ * $
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.currentDir The directory containing the import path currently being addressed.
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns $
+ */
 export const makeFindAllImportsOptions = ({
   cwd,
   visitedSet,
@@ -195,24 +223,37 @@ export const makeFindAllImportsOptions = ({
 }) => ({
   cwd,
   visitedSet,
-  depth,
+  depth: depth + 1,
   maxDepth,
 });
 
-export const makeProcessImportSettings = ({
-  currentDir,
+/**
+ * $
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns $
+ */
+export const makeProcessImportSettings = (
+  filePath,
+  { cwd, visitedSet, depth, maxDepth }
+) => ({
+  currentDir: path.dirname(filePath),
   cwd,
   visitedSet,
   depth,
   maxDepth,
-}) => ({
-  currentDir,
-  cwd,
-  visitedSet,
-  depth,
-  maxDepth,
 });
 
+/**
+ *
+ * @param {Set<string>} visitedSet The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @returns
+ */
 export const visitedSetHasPreviousVisit = (visitedSet, filePath) =>
   visitedSet.has(filePath);
 
@@ -244,18 +285,24 @@ const processImport = (
 ) => {
   // Resolves the provided import path.
   const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
-  // Returns true early to skip processing on unresolved paths.
+  // Returns early to skip processing on unresolved paths.
   if (!resolvedPath) return { ...successTrue, visitedSet };
 
-  /* makeFindAllImportsOptions / */
+  /* makeFindAllImportsOptions 2/4 */
 
   // Establishes the options for the next round of findAllImports.
-  const findAllImportsOptions = {
+  const findAllImportsOptions = makeFindAllImportsOptions({
     cwd,
     visitedSet,
-    depth: depth + 1,
+    depth,
     maxDepth,
-  };
+  });
+  // const findAllImportsOptions = {
+  //   cwd,
+  //   visitedSet,
+  //   depth: depth + 1,
+  //   maxDepth,
+  // };
 
   // Runs findAllImports on the imported path resolved, thus recursively.
   const findAllImportsResults = /** @type {FindAllImportsResults} */ (
@@ -285,97 +332,101 @@ export const findAllImports = (
   } = {}
 ) => {
   /* validateFilePathAndOptions */
+  const validateFilePathAndOptionsResults = validateFilePathAndOptions(
+    filePath,
+    { cwd, visitedSet, depth, maxDepth }
+  );
 
-  // Fails early if max depth is recursively reached.
-  if (depth > maxDepth) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. Max depth ${maxDepth} reached at ${filePath}.`,
-        },
-      ],
-    };
-  }
-  // Fails early if no file is found.
-  if (!fs.existsSync(filePath)) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. File not found at ${filePath}.`,
-        },
-      ],
-    };
-  }
+  if (!validateFilePathAndOptionsResults.success)
+    return validateFilePathAndOptionsResults;
+  const { sourceCode } = validateFilePathAndOptionsResults;
+  // // Fails early if max depth is recursively reached.
+  // if (depth > maxDepth) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeError,
+  //         message: `ERROR. Max depth ${maxDepth} reached at ${filePath}.`,
+  //       },
+  //     ],
+  //   };
+  // }
+  // // Fails early if no file is found.
+  // if (!fs.existsSync(filePath)) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeError,
+  //         message: `ERROR. File not found at ${filePath}.`,
+  //       },
+  //     ],
+  //   };
+  // }
 
-  // Parses the file's source code AST.
-  const sourceCode = getSourceCodeFromFilePath(filePath);
-  // Fails early if there is no AST.
-  if (!sourceCode?.ast) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. Failed to parse AST for ${filePath} somehow.`,
-        },
-      ],
-    };
-  }
+  // // Parses the file's source code AST.
+  // const sourceCode = getSourceCodeFromFilePath(filePath);
+  // // Fails early if there is no AST.
+  // if (!sourceCode?.ast) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeError,
+  //         message: `ERROR. Failed to parse AST for ${filePath} somehow.`,
+  //       },
+  //     ],
+  //   };
+  // }
 
   /* addressPreviousVisits / */
-
   // Returns the existing set directly if a path has already been visited.
-  if (visitedSet.has(filePath)) {
+  if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
     return { ...successTrue, visitedSet };
   }
 
   /* updateVisitedSet / */
 
   // Updates the visited set.
-  visitedSet.add(filePath);
+  updateVisitedSet(visitedSet, filePath);
+  // visitedSet.add(filePath);
 
   /* makeProcessImportSettings / */
 
   // Makes the joint settings for the conditional calls of processImport.
-  const processImportSettings = {
-    currentDir: path.dirname(filePath),
+  const processImportSettings = makeProcessImportSettings(filePath, {
     cwd,
     visitedSet,
     depth,
     maxDepth,
-  };
+  });
+  // const processImportSettings = {
+  //   currentDir: path.dirname(filePath),
+  //   cwd,
+  //   visitedSet,
+  //   depth,
+  //   maxDepth,
+  // };
 
   // Processes all top-level imports.
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y') /* nodeIsImportDeclaration / */
-    if (node.type === "ImportDeclaration") {
+    if (nodeIsImportDeclaration(node)) {
       const processImportResults = processImport(
         node.source.value,
         processImportSettings
       );
-      if (!processImportResults.success) {
-        return processImportResults;
-      }
+      if (!processImportResults.success) return processImportResults;
     }
 
     // CommonJS (require('x')) /* nodeIsRequireCall / */
-    if (
-      node.type === "ExpressionStatement" &&
-      node.expression.type === "CallExpression" &&
-      node.expression.callee.name === "require" &&
-      node.expression.arguments[0]?.type === "Literal"
-    ) {
+    if (nodeIsRequireCall(node)) {
       const processImportResults = processImport(
         node.expression.arguments[0].value,
         processImportSettings
       );
-      if (!processImportResults.success) {
-        return processImportResults;
-      }
+      if (!processImportResults.success) return processImportResults;
     }
   }
 
@@ -403,7 +454,7 @@ const processImportWithCallbackSync = (
 ) => {
   // Resolves the provided import path.
   const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
-  // Returns true early to skip processing on unresolved paths.
+  // Returns early to skip processing on unresolved paths.
   if (!resolvedPath)
     return {
       ...successTrue,
@@ -412,12 +463,18 @@ const processImportWithCallbackSync = (
     };
 
   // Establishes the options for the next round of findAllImports.
-  const findAllImportsOptions = {
+  const findAllImportsOptions = makeFindAllImportsOptions({
     cwd,
     visitedSet,
-    depth: depth + 1,
+    depth,
     maxDepth,
-  };
+  });
+  // const findAllImportsOptions = {
+  //   cwd,
+  //   visitedSet,
+  //   depth: depth + 1,
+  //   maxDepth,
+  // };
 
   // Runs findAllImports on the imported path resolved, thus recursively.
   const findAllImportsResults =
@@ -453,6 +510,55 @@ export const findAllImportsWithCallbackSync = (
     maxDepth = 100,
   } = {}
 ) => {
+  const validateFilePathAndOptionsResults = validateFilePathAndOptions(
+    filePath,
+    { cwd, visitedSet, depth, maxDepth }
+  );
+
+  if (!validateFilePathAndOptionsResults.success)
+    return validateFilePathAndOptionsResults;
+  const { sourceCode } = validateFilePathAndOptionsResults;
+
+  // // Fails early if max depth is recursively reached.
+  // if (depth > maxDepth) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeWarning,
+  //         message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
+  //       },
+  //     ],
+  //   };
+  // }
+  // // Fails early if no file is found.
+  // if (!fs.existsSync(filePath)) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeWarning,
+  //         message: `WARNING. File not found at ${filePath}.`,
+  //       },
+  //     ],
+  //   };
+  // }
+
+  // // Parses the file's source code AST.
+  // const sourceCode = getSourceCodeFromFilePath(filePath);
+  // // Fails early there is no AST.
+  // if (!sourceCode?.ast) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeWarning,
+  //         message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
+  //       },
+  //     ],
+  //   };
+  // }
+
   /* checkCallbackConfig */
 
   // First, begins by checking the integrity of callbackConfig.
@@ -474,32 +580,8 @@ export const findAllImportsWithCallbackSync = (
     };
   }
 
-  // Fails early if max depth is recursively reached.
-  if (depth > maxDepth) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeWarning,
-          message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
-        },
-      ],
-    };
-  }
-  // Fails early if no file is found.
-  if (!fs.existsSync(filePath)) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeWarning,
-          message: `WARNING. File not found at ${filePath}.`,
-        },
-      ],
-    };
-  }
   // Returns the existing set directly if a path has already been visited.
-  if (visitedSet.has(filePath)) {
+  if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
     return {
       ...successTrue,
       visitedSet,
@@ -508,34 +590,12 @@ export const findAllImportsWithCallbackSync = (
   }
 
   // Updates the visited set.
-  visitedSet.add(filePath);
-
-  // Parses the file's source code AST.
-  const sourceCode = getSourceCodeFromFilePath(filePath);
-  // Fails early there is no AST.
-  if (!sourceCode?.ast) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeWarning,
-          message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
-        },
-      ],
-    };
-  }
+  updateVisitedSet(visitedSet, filePath);
 
   // Addresses the callback.
   try {
-    callbackConfig.callback(
-      filePath,
-      sourceCode,
-      callbackConfig.accumulator,
-      depth,
-      maxDepth
-    );
+    callbackConfig.callback(filePath, sourceCode, callbackConfig.accumulator);
   } catch (e) {
-    // Converts callback errors into return errors.
     return {
       ...successFalse,
       errors: [
@@ -548,43 +608,40 @@ export const findAllImportsWithCallbackSync = (
   }
 
   // Makes the joint settings for the conditional calls of processImport.
-  const processImportSettings = {
-    currentDir: path.dirname(filePath),
+  const processImportSettings = makeProcessImportSettings(filePath, {
     cwd,
     visitedSet,
     depth,
     maxDepth,
-  };
+  });
+  // const processImportSettings = {
+  //   currentDir: path.dirname(filePath),
+  //   cwd,
+  //   visitedSet,
+  //   depth,
+  //   maxDepth,
+  // };
 
   // Processes all imports.
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
-    if (node.type === "ImportDeclaration") {
+    if (nodeIsImportDeclaration(node)) {
       const processImportResults = processImportWithCallbackSync(
         node.source.value,
         callbackConfig,
         processImportSettings
       );
-      if (!processImportResults.success) {
-        return processImportResults;
-      }
+      if (!processImportResults.success) return processImportResults;
     }
 
     // CommonJS (require('x'))
-    if (
-      node.type === "ExpressionStatement" &&
-      node.expression.type === "CallExpression" &&
-      node.expression.callee.name === "require" &&
-      node.expression.arguments[0]?.type === "Literal"
-    ) {
+    if (nodeIsRequireCall(node)) {
       const processImportResults = processImportWithCallbackSync(
         node.expression.arguments[0].value,
         callbackConfig,
         processImportSettings
       );
-      if (!processImportResults.success) {
-        return processImportResults;
-      }
+      if (!processImportResults.success) return processImportResults;
     }
   }
 
@@ -616,7 +673,7 @@ const processImportWithCallbackAsync = async (
 ) => {
   // Resolves the provided import path.
   const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
-  // Returns true early to skip processing on unresolved paths.
+  // Returns early to skip processing on unresolved paths.
   if (!resolvedPath)
     return {
       ...successTrue,
@@ -625,12 +682,18 @@ const processImportWithCallbackAsync = async (
     };
 
   // Establishes the options for the next round of findAllImports.
-  const findAllImportsOptions = {
+  const findAllImportsOptions = makeFindAllImportsOptions({
     cwd,
     visitedSet,
-    depth: depth + 1,
+    depth,
     maxDepth,
-  };
+  });
+  // const findAllImportsOptions = {
+  //   cwd,
+  //   visitedSet,
+  //   depth: depth + 1,
+  //   maxDepth,
+  // };
 
   // Runs findAllImports on the imported path resolved, thus recursively.
   const findAllImportsResults =
@@ -666,6 +729,55 @@ export const findAllImportsWithCallbackAsync = async (
     maxDepth = 100,
   } = {}
 ) => {
+  const validateFilePathAndOptionsResults = validateFilePathAndOptions(
+    filePath,
+    { cwd, visitedSet, depth, maxDepth }
+  );
+
+  if (!validateFilePathAndOptionsResults.success)
+    return validateFilePathAndOptionsResults;
+  const { sourceCode } = validateFilePathAndOptionsResults;
+
+  // // Fails early if max depth is recursively reached.
+  // if (depth > maxDepth) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeWarning,
+  //         message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
+  //       },
+  //     ],
+  //   };
+  // }
+  // // Fails early if no file is found.
+  // if (!fs.existsSync(filePath)) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeWarning,
+  //         message: `WARNING. File not found at ${filePath}.`,
+  //       },
+  //     ],
+  //   };
+  // }
+
+  // // Parses the file's source code AST.
+  // const sourceCode = getSourceCodeFromFilePath(filePath);
+  // // Fails early there is no AST.
+  // if (!sourceCode?.ast) {
+  //   return {
+  //     ...successFalse,
+  //     errors: [
+  //       {
+  //         ...typeWarning,
+  //         message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
+  //       },
+  //     ],
+  //   };
+  // }
+
   // First, begins by checking the integrity of callbackConfig.
   // Eventually, I may be doing this with zod, but for now I'm just making sure that callbackConfig is an object. For example, via zod, I'll have to make sure that callbackConfig.callback is strictly synchronous.
   if (
@@ -685,32 +797,8 @@ export const findAllImportsWithCallbackAsync = async (
     };
   }
 
-  // Fails early if max depth is recursively reached.
-  if (depth > maxDepth) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeWarning,
-          message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
-        },
-      ],
-    };
-  }
-  // Fails early if no file is found.
-  if (!fs.existsSync(filePath)) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeWarning,
-          message: `WARNING. File not found at ${filePath}.`,
-        },
-      ],
-    };
-  }
   // Returns the existing set directly if a path has already been visited.
-  if (visitedSet.has(filePath)) {
+  if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
     return {
       ...successTrue,
       visitedSet,
@@ -719,34 +807,16 @@ export const findAllImportsWithCallbackAsync = async (
   }
 
   // Updates the visited set.
-  visitedSet.add(filePath);
-
-  // Parses the file's source code AST.
-  const sourceCode = getSourceCodeFromFilePath(filePath);
-  // Fails early there is no AST.
-  if (!sourceCode?.ast) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeWarning,
-          message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
-        },
-      ],
-    };
-  }
+  updateVisitedSet(visitedSet, filePath);
 
   // Addresses the callback.
   try {
     await callbackConfig.callback(
       filePath,
       sourceCode,
-      callbackConfig.accumulator,
-      depth,
-      maxDepth
+      callbackConfig.accumulator
     );
   } catch (e) {
-    // Converts callback errors into return errors.
     return {
       ...successFalse,
       errors: [
@@ -759,43 +829,40 @@ export const findAllImportsWithCallbackAsync = async (
   }
 
   // Makes the joint settings for the conditional calls of processImport.
-  const processImportSettings = {
-    currentDir: path.dirname(filePath),
+  const processImportSettings = makeProcessImportSettings(filePath, {
     cwd,
     visitedSet,
     depth,
     maxDepth,
-  };
+  });
+  // const processImportSettings = {
+  //   currentDir: path.dirname(filePath),
+  //   cwd,
+  //   visitedSet,
+  //   depth,
+  //   maxDepth,
+  // };
 
   // Processes all imports.
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
-    if (node.type === "ImportDeclaration") {
+    if (nodeIsImportDeclaration(node)) {
       const processImportResults = await processImportWithCallbackAsync(
         node.source.value,
         callbackConfig,
         processImportSettings
       );
-      if (!processImportResults.success) {
-        return processImportResults;
-      }
+      if (!processImportResults.success) return processImportResults;
     }
 
     // CommonJS (require('x'))
-    if (
-      node.type === "ExpressionStatement" &&
-      node.expression.type === "CallExpression" &&
-      node.expression.callee.name === "require" &&
-      node.expression.arguments[0]?.type === "Literal"
-    ) {
+    if (nodeIsRequireCall(node)) {
       const processImportResults = await processImportWithCallbackAsync(
         node.expression.arguments[0].value,
         callbackConfig,
         processImportSettings
       );
-      if (!processImportResults.success) {
-        return processImportResults;
-      }
+      if (!processImportResults.success) return processImportResults;
     }
   }
 
