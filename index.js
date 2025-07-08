@@ -63,6 +63,168 @@ export const typeWarning = Object.freeze({
   type: "warning",
 });
 
+/* helpers */
+
+const makeIsSupposedToBe = (paramName, paramKind) =>
+  `${paramName} is supposed to be ${paramKind}.`;
+
+export const validateFilePathAndOptions = (
+  filePath,
+  { cwd, visitedSet, depth, maxDepth }
+) => {
+  // Begins with roughly validating filePath and options.
+  if (typeof filePath !== "string") {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. ${makeIsSupposedToBe("filePath", "a string")}`,
+        },
+      ],
+    };
+  }
+  if (typeof cwd !== "string") {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. ${makeIsSupposedToBe("cwd", "a string")}`,
+        },
+      ],
+    };
+  }
+  if (visitedSet instanceof Set === false) {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. ${makeIsSupposedToBe("visitedSet", "a Set")}`,
+        },
+      ],
+    };
+  }
+  if (typeof depth !== "number") {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. ${makeIsSupposedToBe("depth", "a number")}`,
+        },
+      ],
+    };
+  }
+  if (typeof maxDepth !== "number") {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. ${makeIsSupposedToBe("maxDepth", "a number")}`,
+        },
+      ],
+    };
+  }
+
+  // Then validates filePath and options with zod.
+  // (To be done.)
+
+  // Fails early if max depth is recursively reached.
+  if (depth > maxDepth) {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. Max depth ${maxDepth} reached at ${filePath}.`,
+        },
+      ],
+    };
+  }
+
+  // Fails early if no file is found.
+  if (!fs.existsSync(filePath)) {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. File not found at ${filePath}.`,
+        },
+      ],
+    };
+  }
+
+  // Parses the file's source code AST.
+  const sourceCode = getSourceCodeFromFilePath(filePath);
+  // Fails early if there is no AST.
+  if (!sourceCode?.ast) {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: `ERROR. Failed to parse AST for ${filePath} somehow.`,
+        },
+      ],
+    };
+  }
+
+  return {
+    ...successTrue,
+    filePath,
+    cwd,
+    visitedSet,
+    depth,
+    maxDepth,
+    sourceCode,
+  };
+};
+
+export const updateVisitedSet = (visitedSet, filePath) =>
+  visitedSet.add(filePath);
+
+export const makeFindAllImportsOptions = ({
+  cwd,
+  visitedSet,
+  depth,
+  maxDepth,
+}) => ({
+  cwd,
+  visitedSet,
+  depth,
+  maxDepth,
+});
+
+export const makeProcessImportSettings = ({
+  currentDir,
+  cwd,
+  visitedSet,
+  depth,
+  maxDepth,
+}) => ({
+  currentDir,
+  cwd,
+  visitedSet,
+  depth,
+  maxDepth,
+});
+
+export const visitedSetHasPreviousVisit = (visitedSet, filePath) =>
+  visitedSet.has(filePath);
+
+export const nodeIsImportDeclaration = (node) =>
+  node.type === "ImportDeclaration";
+
+export const nodeIsRequireCall = (node) =>
+  node.type === "ExpressionStatement" &&
+  node.expression.type === "CallExpression" &&
+  node.expression.callee.name === "require" &&
+  node.expression.arguments[0]?.type === "Literal";
+
 /* findAllImports */
 
 /**
@@ -84,6 +246,8 @@ const processImport = (
   const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
   // Returns true early to skip processing on unresolved paths.
   if (!resolvedPath) return { ...successTrue, visitedSet };
+
+  /* makeFindAllImportsOptions / */
 
   // Establishes the options for the next round of findAllImports.
   const findAllImportsOptions = {
@@ -120,14 +284,16 @@ export const findAllImports = (
     maxDepth = 100,
   } = {}
 ) => {
+  /* validateFilePathAndOptions */
+
   // Fails early if max depth is recursively reached.
   if (depth > maxDepth) {
     return {
       ...successFalse,
       errors: [
         {
-          ...typeWarning,
-          message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
+          ...typeError,
+          message: `ERROR. Max depth ${maxDepth} reached at ${filePath}.`,
         },
       ],
     };
@@ -138,34 +304,41 @@ export const findAllImports = (
       ...successFalse,
       errors: [
         {
-          ...typeWarning,
-          message: `WARNING. File not found at ${filePath}.`,
+          ...typeError,
+          message: `ERROR. File not found at ${filePath}.`,
         },
       ],
     };
   }
-  // Returns the existing set directly if a path has already been visited.
-  if (visitedSet.has(filePath)) {
-    return { ...successTrue, visitedSet };
-  }
-
-  // Updates the visited set.
-  visitedSet.add(filePath);
 
   // Parses the file's source code AST.
   const sourceCode = getSourceCodeFromFilePath(filePath);
-  // Fails early there is no AST.
+  // Fails early if there is no AST.
   if (!sourceCode?.ast) {
     return {
       ...successFalse,
       errors: [
         {
-          ...typeWarning,
-          message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
+          ...typeError,
+          message: `ERROR. Failed to parse AST for ${filePath} somehow.`,
         },
       ],
     };
   }
+
+  /* addressPreviousVisits / */
+
+  // Returns the existing set directly if a path has already been visited.
+  if (visitedSet.has(filePath)) {
+    return { ...successTrue, visitedSet };
+  }
+
+  /* updateVisitedSet / */
+
+  // Updates the visited set.
+  visitedSet.add(filePath);
+
+  /* makeProcessImportSettings / */
 
   // Makes the joint settings for the conditional calls of processImport.
   const processImportSettings = {
@@ -176,9 +349,9 @@ export const findAllImports = (
     maxDepth,
   };
 
-  // Processes all imports.
+  // Processes all top-level imports.
   for (const node of sourceCode.ast.body) {
-    // ES Modules (import x from 'y')
+    // ES Modules (import x from 'y') /* nodeIsImportDeclaration / */
     if (node.type === "ImportDeclaration") {
       const processImportResults = processImport(
         node.source.value,
@@ -189,7 +362,7 @@ export const findAllImports = (
       }
     }
 
-    // CommonJS (require('x'))
+    // CommonJS (require('x')) /* nodeIsRequireCall / */
     if (
       node.type === "ExpressionStatement" &&
       node.expression.type === "CallExpression" &&
@@ -280,6 +453,8 @@ export const findAllImportsWithCallbackSync = (
     maxDepth = 100,
   } = {}
 ) => {
+  /* checkCallbackConfig */
+
   // First, begins by checking the integrity of callbackConfig.
   // Eventually, I may be doing this with zod, but for now I'm just making sure that callbackConfig is an object. For example, via zod, I'll have to make sure that callbackConfig.callback is strictly synchronous.
   if (
