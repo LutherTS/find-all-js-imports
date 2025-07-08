@@ -141,7 +141,7 @@ export const validateFilePathAndOptions = (
 
   // Then validates filePath and options with zod.
   // (To be done.)
-  const visitedSetManuallyTyped = /** @type {Set<string>} */ (visitedSet); // temporarily
+  const visitedSetManuallyTyped = /** @type {Set<string>} */ (visitedSet); // manually typing visitedSet temporarily before implementing zod
 
   // Fails early if max depth is recursively reached.
   if (depth > maxDepth) {
@@ -192,6 +192,73 @@ export const validateFilePathAndOptions = (
     depth,
     maxDepth,
     sourceCode,
+  };
+};
+
+/**
+ *
+ * @param {unknown} callbackConfig
+ * @returns
+ */
+export const validateCallbackConfig = (callbackConfig) => {
+  // First, begins by checking the integrity of callbackConfig.
+  // Eventually, I will be doing this with zod, but for now I'm just making sure that callbackConfig is an object. For example, via zod, I'll have to make sure that callbackConfig.callback is strictly synchronous or asynchronous.
+  if (
+    !callbackConfig ||
+    typeof callbackConfig !== "object" ||
+    Array.isArray(callbackConfig)
+  ) {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message:
+            "ERROR. Invalid callbackConfig format. The callbackConfig should be an object.",
+        },
+      ],
+    };
+  }
+
+  return {
+    ...successTrue,
+    callbackConfig,
+  };
+};
+
+export const validateSynchronousCallbackConfig = (callbackConfig) => {
+  // Begins with roughly validating callbackConfig.
+  const validateCallbackConfigResults = validateCallbackConfig(callbackConfig);
+
+  if (!validateCallbackConfigResults.success)
+    return validateCallbackConfigResults;
+  const { callbackConfig: synchronousCallbackConfig } =
+    validateCallbackConfigResults;
+
+  // Then validates synchronousCallbackConfig with zod.
+  // (To be done.)
+
+  return {
+    ...successTrue,
+    synchronousCallbackConfig,
+  };
+};
+
+export const validateAsynchronousCallbackConfig = async (callbackConfig) => {
+  // Begins with roughly validating callbackConfig.
+  const validateCallbackConfigResults = validateCallbackConfig(callbackConfig);
+
+  if (!validateCallbackConfigResults.success)
+    return validateCallbackConfigResults;
+  const { callbackConfig: asynchronousCallbackConfig } =
+    validateCallbackConfigResults;
+
+  // Then validates asynchronousCallbackConfig with zod.
+  // (To be done.)
+
+  return {
+    ...successTrue,
+    asynchronousCallbackConfig,
   };
 };
 
@@ -288,8 +355,6 @@ const processImport = (
   // Returns early to skip processing on unresolved paths.
   if (!resolvedPath) return { ...successTrue, visitedSet };
 
-  /* makeFindAllImportsOptions 2/4 */
-
   // Establishes the options for the next round of findAllImports.
   const findAllImportsOptions = makeFindAllImportsOptions({
     cwd,
@@ -297,12 +362,6 @@ const processImport = (
     depth,
     maxDepth,
   });
-  // const findAllImportsOptions = {
-  //   cwd,
-  //   visitedSet,
-  //   depth: depth + 1,
-  //   maxDepth,
-  // };
 
   // Runs findAllImports on the imported path resolved, thus recursively.
   const findAllImportsResults = /** @type {FindAllImportsResults} */ (
@@ -331,68 +390,21 @@ export const findAllImports = (
     maxDepth = 100,
   } = {}
 ) => {
-  /* validateFilePathAndOptions */
+  // Begins with validating filePath and options.
   const validateFilePathAndOptionsResults = validateFilePathAndOptions(
     filePath,
     { cwd, visitedSet, depth, maxDepth }
   );
-
   if (!validateFilePathAndOptionsResults.success)
     return validateFilePathAndOptionsResults;
-  const { sourceCode } = validateFilePathAndOptionsResults;
-  // // Fails early if max depth is recursively reached.
-  // if (depth > maxDepth) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeError,
-  //         message: `ERROR. Max depth ${maxDepth} reached at ${filePath}.`,
-  //       },
-  //     ],
-  //   };
-  // }
-  // // Fails early if no file is found.
-  // if (!fs.existsSync(filePath)) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeError,
-  //         message: `ERROR. File not found at ${filePath}.`,
-  //       },
-  //     ],
-  //   };
-  // }
 
-  // // Parses the file's source code AST.
-  // const sourceCode = getSourceCodeFromFilePath(filePath);
-  // // Fails early if there is no AST.
-  // if (!sourceCode?.ast) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeError,
-  //         message: `ERROR. Failed to parse AST for ${filePath} somehow.`,
-  //       },
-  //     ],
-  //   };
-  // }
-
-  /* addressPreviousVisits / */
   // Returns the existing set directly if a path has already been visited.
   if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
     return { ...successTrue, visitedSet };
   }
 
-  /* updateVisitedSet / */
-
   // Updates the visited set.
   updateVisitedSet(visitedSet, filePath);
-  // visitedSet.add(filePath);
-
-  /* makeProcessImportSettings / */
 
   // Makes the joint settings for the conditional calls of processImport.
   const processImportSettings = makeProcessImportSettings(filePath, {
@@ -401,17 +413,11 @@ export const findAllImports = (
     depth,
     maxDepth,
   });
-  // const processImportSettings = {
-  //   currentDir: path.dirname(filePath),
-  //   cwd,
-  //   visitedSet,
-  //   depth,
-  //   maxDepth,
-  // };
 
   // Processes all top-level imports.
+  const { sourceCode } = validateFilePathAndOptionsResults;
   for (const node of sourceCode.ast.body) {
-    // ES Modules (import x from 'y') /* nodeIsImportDeclaration / */
+    // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
       const processImportResults = processImport(
         node.source.value,
@@ -420,7 +426,7 @@ export const findAllImports = (
       if (!processImportResults.success) return processImportResults;
     }
 
-    // CommonJS (require('x')) /* nodeIsRequireCall / */
+    // CommonJS (require('x'))
     if (nodeIsRequireCall(node)) {
       const processImportResults = processImport(
         node.expression.arguments[0].value,
@@ -469,12 +475,6 @@ const processImportWithCallbackSync = (
     depth,
     maxDepth,
   });
-  // const findAllImportsOptions = {
-  //   cwd,
-  //   visitedSet,
-  //   depth: depth + 1,
-  //   maxDepth,
-  // };
 
   // Runs findAllImports on the imported path resolved, thus recursively.
   const findAllImportsResults =
@@ -510,75 +510,19 @@ export const findAllImportsWithCallbackSync = (
     maxDepth = 100,
   } = {}
 ) => {
+  // Begins with validating filePath and options.
   const validateFilePathAndOptionsResults = validateFilePathAndOptions(
     filePath,
     { cwd, visitedSet, depth, maxDepth }
   );
-
   if (!validateFilePathAndOptionsResults.success)
     return validateFilePathAndOptionsResults;
-  const { sourceCode } = validateFilePathAndOptionsResults;
 
-  // // Fails early if max depth is recursively reached.
-  // if (depth > maxDepth) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeWarning,
-  //         message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
-  //       },
-  //     ],
-  //   };
-  // }
-  // // Fails early if no file is found.
-  // if (!fs.existsSync(filePath)) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeWarning,
-  //         message: `WARNING. File not found at ${filePath}.`,
-  //       },
-  //     ],
-  //   };
-  // }
-
-  // // Parses the file's source code AST.
-  // const sourceCode = getSourceCodeFromFilePath(filePath);
-  // // Fails early there is no AST.
-  // if (!sourceCode?.ast) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeWarning,
-  //         message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
-  //       },
-  //     ],
-  //   };
-  // }
-
-  /* checkCallbackConfig */
-
-  // First, begins by checking the integrity of callbackConfig.
-  // Eventually, I may be doing this with zod, but for now I'm just making sure that callbackConfig is an object. For example, via zod, I'll have to make sure that callbackConfig.callback is strictly synchronous.
-  if (
-    !callbackConfig ||
-    typeof callbackConfig !== "object" ||
-    Array.isArray(callbackConfig)
-  ) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message:
-            "ERROR. Invalid callbackConfig format. The callbackConfig should be an object.",
-        },
-      ],
-    };
-  }
+  // Also begins with validating callbackConfig.
+  const validateSynchronousCallbackConfigResults =
+    validateSynchronousCallbackConfig(callbackConfig);
+  if (!validateSynchronousCallbackConfigResults.success)
+    return validateSynchronousCallbackConfigResults;
 
   // Returns the existing set directly if a path has already been visited.
   if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
@@ -614,15 +558,9 @@ export const findAllImportsWithCallbackSync = (
     depth,
     maxDepth,
   });
-  // const processImportSettings = {
-  //   currentDir: path.dirname(filePath),
-  //   cwd,
-  //   visitedSet,
-  //   depth,
-  //   maxDepth,
-  // };
 
-  // Processes all imports.
+  // Processes all top-level imports.
+  const { sourceCode } = validateFilePathAndOptionsResults;
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
@@ -688,12 +626,6 @@ const processImportWithCallbackAsync = async (
     depth,
     maxDepth,
   });
-  // const findAllImportsOptions = {
-  //   cwd,
-  //   visitedSet,
-  //   depth: depth + 1,
-  //   maxDepth,
-  // };
 
   // Runs findAllImports on the imported path resolved, thus recursively.
   const findAllImportsResults =
@@ -729,73 +661,19 @@ export const findAllImportsWithCallbackAsync = async (
     maxDepth = 100,
   } = {}
 ) => {
+  // Begins with validating filePath and options.
   const validateFilePathAndOptionsResults = validateFilePathAndOptions(
     filePath,
     { cwd, visitedSet, depth, maxDepth }
   );
-
   if (!validateFilePathAndOptionsResults.success)
     return validateFilePathAndOptionsResults;
-  const { sourceCode } = validateFilePathAndOptionsResults;
 
-  // // Fails early if max depth is recursively reached.
-  // if (depth > maxDepth) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeWarning,
-  //         message: `WARNING. Max depth ${maxDepth} reached at ${filePath}.`,
-  //       },
-  //     ],
-  //   };
-  // }
-  // // Fails early if no file is found.
-  // if (!fs.existsSync(filePath)) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeWarning,
-  //         message: `WARNING. File not found at ${filePath}.`,
-  //       },
-  //     ],
-  //   };
-  // }
-
-  // // Parses the file's source code AST.
-  // const sourceCode = getSourceCodeFromFilePath(filePath);
-  // // Fails early there is no AST.
-  // if (!sourceCode?.ast) {
-  //   return {
-  //     ...successFalse,
-  //     errors: [
-  //       {
-  //         ...typeWarning,
-  //         message: `WARNING. Failed to parse AST for ${filePath} somehow.`,
-  //       },
-  //     ],
-  //   };
-  // }
-
-  // First, begins by checking the integrity of callbackConfig.
-  // Eventually, I may be doing this with zod, but for now I'm just making sure that callbackConfig is an object. For example, via zod, I'll have to make sure that callbackConfig.callback is strictly synchronous.
-  if (
-    !callbackConfig ||
-    typeof callbackConfig !== "object" ||
-    Array.isArray(callbackConfig)
-  ) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message:
-            "ERROR. Invalid callbackConfig format. The callbackConfig should be an object.",
-        },
-      ],
-    };
-  }
+  // Also begins with validating callbackConfig.
+  const validateAsynchronousCallbackConfigResults =
+    await validateAsynchronousCallbackConfig(callbackConfig);
+  if (!validateAsynchronousCallbackConfigResults.success)
+    return validateAsynchronousCallbackConfigResults;
 
   // Returns the existing set directly if a path has already been visited.
   if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
@@ -835,15 +713,9 @@ export const findAllImportsWithCallbackAsync = async (
     depth,
     maxDepth,
   });
-  // const processImportSettings = {
-  //   currentDir: path.dirname(filePath),
-  //   cwd,
-  //   visitedSet,
-  //   depth,
-  //   maxDepth,
-  // };
 
-  // Processes all imports.
+  // Processes all top-level imports.
+  const { sourceCode } = validateFilePathAndOptionsResults;
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
