@@ -31,8 +31,6 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
  *     filePath: string,
  *     sourceCode: import('eslint').SourceCode,
  *     accumulator: unknown,
- *     depth: number,
- *     maxDepth: number
  *   ) => void;
  *   accumulator: unknown;
  * }} SynchronousCallbackConfig
@@ -44,8 +42,6 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
  *     filePath: string,
  *     sourceCode: import('eslint').SourceCode,
  *     accumulator: unknown,
- *     depth: number,
- *     maxDepth: number
  *   ) => Promise<void>,
  *   accumulator: unknown
  * }} AsynchronousCallbackConfig
@@ -66,8 +62,6 @@ export const typeError = Object.freeze({
 export const typeWarning = Object.freeze({
   type: "warning",
 });
-
-// IMPORTANT. findAllImports needs to be able to take a callback function that it can play at every recursion to find the corresponding value for go-to-definitions. But that's on the roadmap, not in the first release. The first implementation of this pinpoint go-to-definition mechanism will be made by analyzing each path obtained rather than by doing so as the paths are being obtained.
 
 /* findAllImports */
 
@@ -268,7 +262,7 @@ const processImportWithCallbackSync = (
 /**
  * Finds all import paths recursively related to a given file path, with a given callback function running on every file path encountered, synchronously.
  * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
- * @param {SynchronousCallbackConfig} callbackConfig The configuration of a synchronous-only callback function provided to `findAllImportsWithCallbackSync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties. The callback runs on every file path found, before `findAllImportsWithCallbackSync`'s recursion, and accesses five arguments in the following order: `filePath` which is the current file's path, `sourceCode` which is the current file's SourceCode object, `accumulator` which is the accumulator for the callback through the recursion, `depth` with is the current depth of the recursion, and `maxDepth` which is the maximum depth allowed for the recursion.
+ * @param {SynchronousCallbackConfig} callbackConfig The configuration of a synchronous-only callback function provided to `findAllImportsWithCallbackSync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties. The callback runs on every file path found, before `findAllImportsWithCallbackSync`'s recursion, and accesses five arguments in the following order: `filePath` which is the current file's path, `sourceCode` which is the current file's SourceCode object, and `accumulator` which is the accumulator for the callback through the recursion.
  * @param {Object} options The additional options as follows:
  * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
  * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
@@ -358,13 +352,13 @@ export const findAllImportsWithCallbackSync = (
 
   // Addresses the callback.
   try {
-    callbackConfig.callback({
+    callbackConfig.callback(
       filePath,
       sourceCode,
-      accumulator: callbackConfig.accumulator,
+      callbackConfig.accumulator,
       depth,
-      maxDepth,
-    });
+      maxDepth
+    );
   } catch (e) {
     // Converts callback errors into return errors.
     return {
@@ -479,7 +473,7 @@ const processImportWithCallbackAsync = async (
 /**
  * Finds all import paths recursively related to a given file path, with a given callback function running on every file path encountered, asynchronously.
  * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
- * @param {AsynchronousCallbackConfig} callbackConfig The configuration of an asynchronous-only callback function provided to `findAllImportsWithCallbackAsync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties. The callback runs on every file path found, before `findAllImportsWithCallbackAsync`'s recursion, and accesses five arguments in the following order: `filePath` which is the current file's path, `sourceCode` which is the current file's SourceCode object, `accumulator` which is the accumulator for the callback through the recursion, `depth` with is the current depth of the recursion, and `maxDepth` which is the maximum depth allowed for the recursion.
+ * @param {AsynchronousCallbackConfig} callbackConfig The configuration of an asynchronous-only callback function provided to `findAllImportsWithCallbackAsync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties. The callback runs on every file path found, before `findAllImportsWithCallbackAsync`'s recursion, and accesses five arguments in the following order: `filePath` which is the current file's path, `sourceCode` which is the current file's SourceCode object, and `accumulator` which is the accumulator for the callback through the recursion.
  * @param {Object} options The additional options as follows:
  * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
  * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
@@ -569,13 +563,13 @@ export const findAllImportsWithCallbackAsync = async (
 
   // Addresses the callback.
   try {
-    await callbackConfig.callback({
+    await callbackConfig.callback(
       filePath,
       sourceCode,
-      accumulator: callbackConfig.accumulator,
+      callbackConfig.accumulator,
       depth,
-      maxDepth,
-    });
+      maxDepth
+    );
   } catch (e) {
     // Converts callback errors into return errors.
     return {
