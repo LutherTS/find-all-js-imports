@@ -398,6 +398,9 @@ export const findAllImports = (
   if (!validateFilePathAndOptionsResults.success)
     return validateFilePathAndOptionsResults;
 
+  // Retrieves the file path's SourceCode object from the validated results.
+  const { sourceCode } = validateFilePathAndOptionsResults;
+
   // Returns the existing set directly if a path has already been visited.
   if (visitedSetHasPreviousVisit(visitedSet, filePath)) {
     return { ...successTrue, visitedSet };
@@ -415,7 +418,6 @@ export const findAllImports = (
   });
 
   // Processes all top-level imports.
-  const { sourceCode } = validateFilePathAndOptionsResults;
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
@@ -518,6 +520,9 @@ export const findAllImportsWithCallbackSync = (
   if (!validateFilePathAndOptionsResults.success)
     return validateFilePathAndOptionsResults;
 
+  // Retrieves the file path's SourceCode object from the validated results.
+  const { sourceCode } = validateFilePathAndOptionsResults;
+
   // Also begins with validating callbackConfig.
   const validateSynchronousCallbackConfigResults =
     validateSynchronousCallbackConfig(callbackConfig);
@@ -560,7 +565,6 @@ export const findAllImportsWithCallbackSync = (
   });
 
   // Processes all top-level imports.
-  const { sourceCode } = validateFilePathAndOptionsResults;
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
@@ -669,6 +673,9 @@ export const findAllImportsWithCallbackAsync = async (
   if (!validateFilePathAndOptionsResults.success)
     return validateFilePathAndOptionsResults;
 
+  // Retrieves the file path's SourceCode object from the validated results.
+  const { sourceCode } = validateFilePathAndOptionsResults;
+
   // Also begins with validating callbackConfig.
   const validateAsynchronousCallbackConfigResults =
     await validateAsynchronousCallbackConfig(callbackConfig);
@@ -715,7 +722,6 @@ export const findAllImportsWithCallbackAsync = async (
   });
 
   // Processes all top-level imports.
-  const { sourceCode } = validateFilePathAndOptionsResults;
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
