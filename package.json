@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "get-sourcecode-from-file-path": "^1.1.2",
-    "resolve-importing-path": "^1.0.3"
+    "resolve-importing-path": "^1.0.3",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "eslint": "^9.30.1"

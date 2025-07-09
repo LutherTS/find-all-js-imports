@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 
+import * as z from "zod";
+
 import { resolveImportingPath } from "resolve-importing-path";
 import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
 
@@ -68,6 +70,11 @@ export const typeError = Object.freeze({
 export const typeWarning = Object.freeze({
   type: "warning",
 });
+
+const VisitedSetSchema = z.set(
+  z.string({ error: "All values within visitedSet should be strings." }),
+  { error: "visitedSet should be a Set." }
+);
 
 /* helpers
  * First, make sure they work.
@@ -157,9 +164,23 @@ export const validateFilePathAndOptions = (
     };
   }
 
-  // Then validates filePath and options with zod.
-  // (To be done.)
-  const visitedSetManuallyTyped = /** @type {Set<string>} */ (visitedSet); // manually typing visitedSet temporarily before implementing zod
+  // Then validates visitedSet with zod.
+  const visitedSetResults = VisitedSetSchema.safeParse(visitedSet);
+  if (!visitedSetResults.success) {
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message: "ERROR. Config data could not pass validation from zod.",
+        },
+        ...visitedSetResults.error.issues.map((e) => ({
+          ...typeError,
+          message: e.message,
+        })),
+      ],
+    };
+  }
 
   // Fails early if max depth is recursively reached.
   if (depth > maxDepth) {
@@ -206,7 +227,7 @@ export const validateFilePathAndOptions = (
     ...successTrue,
     filePath,
     cwd,
-    visitedSet: visitedSetManuallyTyped,
+    visitedSet: visitedSetResults.data,
     depth,
     maxDepth,
     sourceCode,
@@ -219,8 +240,7 @@ export const validateFilePathAndOptions = (
  * @returns
  */
 export const validateCallbackConfig = (callbackConfig) => {
-  // First, begins by checking the integrity of callbackConfig.
-  // Eventually, I will be doing this with zod, but for now I'm just making sure that callbackConfig is an object. For example, via zod, I'll have to make sure that callbackConfig.callback is strictly synchronous or asynchronous.
+  // Begins by checking the integrity of callbackConfig.
   if (
     !callbackConfig ||
     typeof callbackConfig !== "object" ||
@@ -238,55 +258,30 @@ export const validateCallbackConfig = (callbackConfig) => {
     };
   }
 
+  // Ensures callbackConfig.callback is a function.
+  const callback = /** @type {unknown} */ (callbackConfig.callback);
+  if (typeof callback !== "function")
+    return {
+      ...successFalse,
+      errors: [
+        {
+          ...typeError,
+          message:
+            "ERROR. Invalid callbackConfig.callback format. The callbackConfig.callback should be a function.",
+        },
+      ],
+    };
+
+  // Ascertains callbackConfig.accumulator to be unknown.
+  const accumulator = /** @type {unknown} */ (callbackConfig.accumulator);
+
+  // Returns callbackConfig with validated and typed properties. (Even though these won't be used within the functions in order to benefit fom the preexisting JSDoc.)
   return {
     ...successTrue,
-    callbackConfig,
-  };
-};
-
-/**
- *
- * @param {unknown} callbackConfig
- * @returns
- */
-export const validateSynchronousCallbackConfig = (callbackConfig) => {
-  // Begins with roughly validating callbackConfig.
-  const validateCallbackConfigResults = validateCallbackConfig(callbackConfig);
-
-  if (!validateCallbackConfigResults.success)
-    return validateCallbackConfigResults;
-  const { callbackConfig: synchronousCallbackConfig } =
-    validateCallbackConfigResults;
-
-  // Then validates synchronousCallbackConfig with zod.
-  // (To be done.)
-
-  return {
-    ...successTrue,
-    synchronousCallbackConfig,
-  };
-};
-
-/**
- *
- * @param {unknown} callbackConfig
- * @returns
- */
-export const validateAsynchronousCallbackConfig = async (callbackConfig) => {
-  // Begins with roughly validating callbackConfig.
-  const validateCallbackConfigResults = validateCallbackConfig(callbackConfig);
-
-  if (!validateCallbackConfigResults.success)
-    return validateCallbackConfigResults;
-  const { callbackConfig: asynchronousCallbackConfig } =
-    validateCallbackConfigResults;
-
-  // Then validates asynchronousCallbackConfig with zod.
-  // (To be done.)
-
-  return {
-    ...successTrue,
-    asynchronousCallbackConfig,
+    callbackConfig: {
+      callback,
+      accumulator,
+    },
   };
 };
 
@@ -563,7 +558,7 @@ export const findAllImportsWithCallbackSync = (
 
   // Also begins with validating callbackConfig.
   const validateSynchronousCallbackConfigResults =
-    validateSynchronousCallbackConfig(callbackConfig);
+    validateCallbackConfig(callbackConfig);
   if (!validateSynchronousCallbackConfigResults.success)
     return validateSynchronousCallbackConfigResults;
 
@@ -716,7 +711,7 @@ export const findAllImportsWithCallbackAsync = async (
 
   // Also begins with validating callbackConfig.
   const validateAsynchronousCallbackConfigResults =
-    await validateAsynchronousCallbackConfig(callbackConfig);
+    validateCallbackConfig(callbackConfig);
   if (!validateAsynchronousCallbackConfigResults.success)
     return validateAsynchronousCallbackConfigResults;
 
