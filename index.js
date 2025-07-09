@@ -7,6 +7,7 @@ import { getSourceCodeFromFilePath } from "get-sourcecode-from-file-path";
 /**
  * @typedef {"error" | "warning"} ErrorOrWarning
  * @typedef {import('eslint').SourceCode} SourceCode
+ * @typedef {import('@typescript-eslint/types').TSESTree.Program['body'][number]} ASTBodyNode
  */
 
 /**
@@ -70,14 +71,31 @@ export const typeWarning = Object.freeze({
 
 /* helpers
  * First, make sure they work.
- * Second, make params' types.
+ * Second, make their params' types.
  * Third, make their JSDoc.
  * Fourth, make their own files in a new library/ directory.
  */
 
+/**
+ *
+ * @param {string} paramName
+ * @param {string} paramKind
+ * @returns
+ */
 const makeIsSupposedToBe = (paramName, paramKind) =>
   `${paramName} is supposed to be ${paramKind}.`;
 
+// OK. I'm currently leaving this as options because they are options on the part function, but since are mandatory here they should eventually become categorized as settings. But at the same time... For a validation function to have credible inference, it would actually need all of its parameters to being as unknown, to confirm that the inference is from the validation and not from the param typings.
+/**
+ *
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {Object} options The additional options as follows:
+ * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
+ * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {number} [options.depth] The current depth of the recursion, instantiated at `0` by default.
+ * @param {number} [options.maxDepth] The maximum depth allowed for the recursion, instantiated at `100` by default.
+ * @returns
+ */
 export const validateFilePathAndOptions = (
   filePath,
   { cwd, visitedSet, depth, maxDepth }
@@ -226,6 +244,11 @@ export const validateCallbackConfig = (callbackConfig) => {
   };
 };
 
+/**
+ *
+ * @param {unknown} callbackConfig
+ * @returns
+ */
 export const validateSynchronousCallbackConfig = (callbackConfig) => {
   // Begins with roughly validating callbackConfig.
   const validateCallbackConfigResults = validateCallbackConfig(callbackConfig);
@@ -244,6 +267,11 @@ export const validateSynchronousCallbackConfig = (callbackConfig) => {
   };
 };
 
+/**
+ *
+ * @param {unknown} callbackConfig
+ * @returns
+ */
 export const validateAsynchronousCallbackConfig = async (callbackConfig) => {
   // Begins with roughly validating callbackConfig.
   const validateCallbackConfigResults = validateCallbackConfig(callbackConfig);
@@ -324,9 +352,19 @@ export const makeProcessImportSettings = (
 export const visitedSetHasPreviousVisit = (visitedSet, filePath) =>
   visitedSet.has(filePath);
 
+/**
+ *
+ * @param {ASTBodyNode} node
+ * @returns
+ */
 export const nodeIsImportDeclaration = (node) =>
   node.type === "ImportDeclaration";
 
+/**
+ *
+ * @param {ASTBodyNode} node
+ * @returns
+ */
 export const nodeIsRequireCall = (node) =>
   node.type === "ExpressionStatement" &&
   node.expression.type === "CallExpression" &&
