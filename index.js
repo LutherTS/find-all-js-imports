@@ -89,8 +89,23 @@ const VisitedSetSchema = z.set(
  * @param {string} paramKind $COMMENT#JSDOC#PARAMS#PARAMKIND
  * @returns $COMMENT#JSDOC#RETURNS#MAKEISSUPPOSEDTOBE
  */
-const makeIsSupposedToBe = (paramName, paramKind) =>
+export const makeIsSupposedToBe = (paramName, paramKind) =>
   `${paramName} is supposed to be ${paramKind}.`;
+
+/**
+ * $COMMENT#JSDOC#DEFINITIONS#MAKESUCCESSFALSETYPEERROR
+ * @param {string} message $COMMENT#JSDOC#PARAMS#MESSAGE
+ * @returns $COMMENT#JSDOC#RETURNS#MAKESUCCESSFALSETYPEERROR
+ */
+export const makeSuccessFalseTypeError = (message) => ({
+  ...successFalse,
+  errors: [
+    {
+      ...typeError,
+      message,
+    },
+  ],
+});
 
 /**
  * $COMMENT#JSDOC#DEFINITIONS#VALIDATEFILEPATHANDOPTIONS
@@ -107,61 +122,26 @@ export const validateFilePathAndOptions = (
   { cwd, visitedSet, depth, maxDepth }
 ) => {
   // Begins with roughly validating filePath and options.
-  if (typeof filePath !== "string") {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. ${makeIsSupposedToBe("filePath", "a string")}`,
-        },
-      ],
-    };
-  }
-  if (typeof cwd !== "string") {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. ${makeIsSupposedToBe("cwd", "a string")}`,
-        },
-      ],
-    };
-  }
-  if (visitedSet instanceof Set === false) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. ${makeIsSupposedToBe("visitedSet", "a Set")}`,
-        },
-      ],
-    };
-  }
-  if (typeof depth !== "number") {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. ${makeIsSupposedToBe("depth", "a number")}`,
-        },
-      ],
-    };
-  }
-  if (typeof maxDepth !== "number") {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. ${makeIsSupposedToBe("maxDepth", "a number")}`,
-        },
-      ],
-    };
-  }
+  if (typeof filePath !== "string")
+    return makeSuccessFalseTypeError(
+      `ERROR. ${makeIsSupposedToBe("filePath", "a string")}`
+    );
+  if (typeof cwd !== "string")
+    return makeSuccessFalseTypeError(
+      `ERROR. ${makeIsSupposedToBe("cwd", "a string")}`
+    );
+  if (visitedSet instanceof Set === false)
+    return makeSuccessFalseTypeError(
+      `ERROR. ${makeIsSupposedToBe("visitedSet", "a Set")}`
+    );
+  if (typeof depth !== "number")
+    return makeSuccessFalseTypeError(
+      `ERROR. ${makeIsSupposedToBe("depth", "a number")}`
+    );
+  if (typeof maxDepth !== "number")
+    return makeSuccessFalseTypeError(
+      `ERROR. ${makeIsSupposedToBe("maxDepth", "a number")}`
+    );
 
   // Then validates visitedSet with zod.
   const visitedSetResults = VisitedSetSchema.safeParse(visitedSet);
@@ -182,45 +162,22 @@ export const validateFilePathAndOptions = (
   }
 
   // Fails early if max depth is recursively reached.
-  if (depth > maxDepth) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. Max depth ${maxDepth} reached at ${filePath}.`,
-        },
-      ],
-    };
-  }
+  if (depth > maxDepth)
+    return makeSuccessFalseTypeError(
+      `ERROR. Max depth ${maxDepth} reached at ${filePath}.`
+    );
 
   // Fails early if no file is found.
-  if (!fs.existsSync(filePath)) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. File not found at ${filePath}.`,
-        },
-      ],
-    };
-  }
+  if (!fs.existsSync(filePath))
+    return makeSuccessFalseTypeError(`ERROR. File not found at ${filePath}.`);
 
   // Parses the file's source code AST.
   const sourceCode = getSourceCodeFromFilePath(filePath);
   // Fails early if there is no AST.
-  if (!sourceCode?.ast) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. Failed to parse AST for ${filePath} somehow.`,
-        },
-      ],
-    };
-  }
+  if (!sourceCode?.ast)
+    return makeSuccessFalseTypeError(
+      `ERROR. Failed to parse AST for ${filePath} somehow.`
+    );
 
   return {
     ...successTrue,
@@ -244,32 +201,17 @@ export const validateCallbackConfig = (callbackConfig) => {
     !callbackConfig ||
     typeof callbackConfig !== "object" ||
     Array.isArray(callbackConfig)
-  ) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message:
-            "ERROR. Invalid callbackConfig format. The callbackConfig should be an object.",
-        },
-      ],
-    };
-  }
+  )
+    return makeSuccessFalseTypeError(
+      "ERROR. Invalid callbackConfig format. The callbackConfig should be an object."
+    );
 
   // Ensures callbackConfig.callback is a function.
   const callback = /** @type {unknown} */ (callbackConfig.callback);
   if (typeof callback !== "function")
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message:
-            "ERROR. Invalid callbackConfig.callback format. The callbackConfig.callback should be a function.",
-        },
-      ],
-    };
+    return makeSuccessFalseTypeError(
+      "ERROR. Invalid callbackConfig.callback format. The callbackConfig.callback should be a function."
+    );
 
   // Ascertains callbackConfig.accumulator to be unknown.
   const accumulator = /** @type {unknown} */ (callbackConfig.accumulator);
@@ -577,15 +519,9 @@ export const findAllImportsWithCallbackSync = (
   try {
     callbackConfig.callback(filePath, sourceCode, callbackConfig.accumulator);
   } catch (e) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. Callback error in ${filePath}. \nError: \n${e}`,
-        },
-      ],
-    };
+    return makeSuccessFalseTypeError(
+      `ERROR. Callback error in ${filePath}. \nError: \n${e}`
+    );
   }
 
   // Makes the joint settings for the conditional calls of processImport.
@@ -734,15 +670,9 @@ export const findAllImportsWithCallbackAsync = async (
       callbackConfig.accumulator
     );
   } catch (e) {
-    return {
-      ...successFalse,
-      errors: [
-        {
-          ...typeError,
-          message: `ERROR. Callback error in ${filePath}. \nError: \n${e}`,
-        },
-      ],
-    };
+    return makeSuccessFalseTypeError(
+      `ERROR. Callback error in ${filePath}. \nError: \n${e}`
+    );
   }
 
   // Makes the joint settings for the conditional calls of processImport.

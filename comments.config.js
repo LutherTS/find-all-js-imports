@@ -7,6 +7,8 @@ const data = {
         "Processes recursively and resolves a single import path. (Unlike `findAllImports`, here `currentDir`, `cwd`, `visitedSet`, `depth`, and `maxDepth` aren't options because they are mandatory and not pre-parameterized.)", // $COMMENT#JSDOC#DEFINITIONS#PROCESSIMPORT
       makeIsSupposedToBe:
         "Makes a standardized string for `typeof` errors, `instanceof` errors and the likes.", // $COMMENT#JSDOC#DEFINITIONS#MAKEISSUPPOSEDTOBE
+      makeSuccessFalseTypeError:
+        'Makes a `{success: false}` object with a single error in its errors array of `{type: "error"}` based on the message it is meant to display.', // $COMMENT#JSDOC#DEFINITIONS#MAKESUCCESSFALSETYPEERROR
       validateFilePathAndOptions:
         "Validates filePath and options in `findAllImports` functions, both structurally and functionally.", // $COMMENT#JSDOC#DEFINITIONS#VALIDATEFILEPATHANDOPTIONS
       validateCallbackConfig:
@@ -51,6 +53,7 @@ const data = {
       settings: "The required settings as follows:", // $COMMENT#JSDOC#PARAMS#SETTINGS
       paramName: "The string for the param's name.", // $COMMENT#JSDOC#PARAMS#PARAMNAME
       paramKind: "The string for the param's kind.", // $COMMENT#JSDOC#PARAMS#PARAMKIND
+      message: "The human-readable message of the error.", // $COMMENT#JSDOC#PARAMS#MESSAGE
       callbackConfig:
         "The configuration of a callback function provided to a `findAllImports` function, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties.", // $COMMENT#JSDOC#PARAMS#CALLBACKCONFIG
       node: "The current node of the current file path's AST (Abstract Syntax Tree).", // $COMMENT#JSDOC#PARAMS#NODE
@@ -69,6 +72,8 @@ const data = {
       processImport:
         "The results of the embedded round of `findAllImports`, since `findAllImports`'s recursion happens within `processImport`.", // $COMMENT#JSDOC#RETURNS#PROCESSIMPORT
       makeIsSupposedToBe: "[paramName] is supposed to be [paramKind].", // $COMMENT#JSDOC#RETURNS#MAKEISSUPPOSEDTOBE
+      makeSuccessFalseTypeError:
+        'A `{success: false}` object with a single error in its error array of `{type: "error"}`.', // $COMMENT#JSDOC#RETURNS#MAKESUCCESSFALSETYPEERROR
       validate:
         "A `{success: false}` object along with its errors when an issue is encountered, used to stop the process while notifying on the reasons why it stopped at the point of consumption.", // $COMMENT#JSDOC#RETURNS#VALIDATE
       makeProcessImportSettings:
