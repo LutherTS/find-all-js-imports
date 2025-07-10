@@ -10,7 +10,7 @@
   "license": "MIT",
   "author": "Luther Tchofo Safo <luther@tchofo-safo-portfolio.me>",
   "type": "module",
-  "main": "index.js",
+  "main": "library/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LutherTS/find-all-js-imports.git"
