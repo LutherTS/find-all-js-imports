@@ -7,7 +7,7 @@ import { successTrue, successFalse, typeError } from "../constants/bases.js";
 import { VisitedSetSchema } from "../constants/schemas.js";
 
 /**
- * @typedef {import("../../types/_commons/typedefs.js").ASTBodyNode} ASTBodyNode
+ * @typedef {import("../../types/typedefs.js").ASTBodyNode} ASTBodyNode
  */
 
 /* makeSuccessFalseTypeError */

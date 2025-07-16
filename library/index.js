@@ -14,10 +14,10 @@ import {
 } from "./utilities/helpers.js";
 
 /**
- * @typedef {import("../types/_commons/typedefs.js").FindAllImportsResults} FindAllImportsResults
- * @typedef {import("../types/_commons/typedefs.js").FindAllImportsResultsWithAccumulator} FindAllImportsResultsWithAccumulator
- * @typedef {import("../types/_commons/typedefs.js").SynchronousCallbackConfig} SynchronousCallbackConfig
- * @typedef {import("../types/_commons/typedefs.js").AsynchronousCallbackConfig} AsynchronousCallbackConfig
+ * @typedef {import("../types/typedefs.js").FindAllImportsResults} FindAllImportsResults
+ * @typedef {import("../types/typedefs.js").FindAllImportsResultsWithAccumulator} FindAllImportsResultsWithAccumulator
+ * @typedef {import("../types/typedefs.js").SynchronousCallbackConfig} SynchronousCallbackConfig
+ * @typedef {import("../types/typedefs.js").AsynchronousCallbackConfig} AsynchronousCallbackConfig
  */
 
 /* findAllImports */
