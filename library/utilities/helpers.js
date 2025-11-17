@@ -13,9 +13,9 @@ import { VisitedSetSchema } from "../constants/schemas.js";
 /* makeSuccessFalseTypeError */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#MAKESUCCESSFALSETYPEERROR
- * @param {string} message $COMMENT#JSDOC#PARAMS#MESSAGE
- * @returns $COMMENT#JSDOC#RETURNS#MAKESUCCESSFALSETYPEERROR
+ * Makes a `{success: false}` object with a single error in its errors array of `{type: "error"}` based on the message it is meant to display.
+ * @param {string} message The human-readable message of the error.
+ * @returns A `{success: false}` object with a single error in its error array of `{type: "error"}`.
  */
 export const makeSuccessFalseTypeError = (message) => ({
   ...successFalse,
@@ -30,23 +30,23 @@ export const makeSuccessFalseTypeError = (message) => ({
 /* validateFilePathAndOptions */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#MAKEISSUPPOSEDTOBE
- * @param {string} paramName $COMMENT#JSDOC#PARAMS#PARAMNAME
- * @param {string} paramKind $COMMENT#JSDOC#PARAMS#PARAMKIND
- * @returns $COMMENT#JSDOC#RETURNS#MAKEISSUPPOSEDTOBE
+ * Makes a standardized string for `typeof` errors, `instanceof` errors and the likes.
+ * @param {string} paramName The string for the param's name.
+ * @param {string} paramKind The string for the param's kind.
+ * @returns [paramName] is supposed to be [paramKind].
  */
 const makeIsSupposedToBe = (paramName, paramKind) =>
   `${paramName} is supposed to be ${paramKind}.`;
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#VALIDATEFILEPATHANDOPTIONS
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
- * @param {Object} options $COMMENT#JSDOC#PARAMS#OPTIONS
- * @param {string} [options.cwd] $COMMENT#JSDOC#PARAMS#CWDOPTION
- * @param {Set<string>} [options.visitedSet] $COMMENT#JSDOC#PARAMS#VISITEDSETOPTION
- * @param {number} [options.depth] $COMMENT#JSDOC#PARAMS#DEPTHOPTION
- * @param {number} [options.maxDepth] $COMMENT#JSDOC#PARAMS#MAXDEPTHOPTION
- * @returns $COMMENT#JSDOC#RETURNS#VALIDATE
+ * Validates filePath and options in `findAllImports` functions, both structurally and functionally.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {Object} options The additional options as follows:
+ * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
+ * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {number} [options.depth] The current depth of the recursion, instantiated at `0` by default.
+ * @param {number} [options.maxDepth] The maximum depth allowed for the recursion, instantiated at `100` by default.
+ * @returns A `{success: false}` object along with its errors when an issue is encountered, used to stop the process while notifying on the reasons why it stopped at the point of consumption.
  */
 export const validateFilePathAndOptions = (
   filePath,
@@ -124,9 +124,9 @@ export const validateFilePathAndOptions = (
 /* validateCallbackConfig */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#VALIDATECALLBACKCONFIG
- * @param {unknown} callbackConfig $COMMENT#JSDOC#PARAMS#CALLBACKCONFIG
- * @returns $COMMENT#JSDOC#RETURNS#VALIDATE
+ * Validates the callbackConfig passed, ensures that it is an object, that its property `callback` is a function, and ascertains that its property `accumulator` is unknown.
+ * @param {unknown} callbackConfig The configuration of a callback function provided to a `findAllImports` function, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties.
+ * @returns A `{success: false}` object along with its errors when an issue is encountered, used to stop the process while notifying on the reasons why it stopped at the point of consumption.
  */
 export const validateCallbackConfig = (callbackConfig) => {
   // Begins by checking the integrity of callbackConfig.
@@ -162,9 +162,9 @@ export const validateCallbackConfig = (callbackConfig) => {
 /* updateVisitedSet */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#UPDATEVISITEDSET
- * @param {Set<string>} visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETOPTION
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
+ * Updates visitedSet with the current filePath once all validations have been successful, thus including it in the list of the original file path and all of its recursive imports.
+ * @param {Set<string>} visitedSet The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
  * @returns
  */
 export const updateVisitedSet = (visitedSet, filePath) => {
@@ -174,14 +174,14 @@ export const updateVisitedSet = (visitedSet, filePath) => {
 /* makeProcessImportSettings */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#MAKEPROCESSIMPORTSETTINGS
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
- * @param {Object} settings $COMMENT#JSDOC#PARAMS#SETTINGS
- * @param {string} settings.cwd $COMMENT#JSDOC#PARAMS#CWDSETTING
- * @param {Set<string>} settings.visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETSETTING
- * @param {number} settings.depth $COMMENT#JSDOC#PARAMS#DEPTHSETTING
- * @param {number} settings.maxDepth $COMMENT#JSDOC#PARAMS#MAXDEPTHSETTING
- * @returns $COMMENT#JSDOC#RETURNS#MAKEPROCESSIMPORTSETTINGS
+ * Makes the settings of the next round of `processImport`.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns The settings object of the next round of `processImport`.
  */
 export const makeProcessImportSettings = (
   filePath,
@@ -197,14 +197,14 @@ export const makeProcessImportSettings = (
 /* makeFindAllImportsOptions */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#MAKEFINDALLIMPORTSOPTIONS
- * @param {Object} settings $COMMENT#JSDOC#PARAMS#SETTINGS
- * @param {string} settings.currentDir $COMMENT#JSDOC#PARAMS#CURRENTDIRSETTING
- * @param {string} settings.cwd $COMMENT#JSDOC#PARAMS#CWDSETTING
- * @param {Set<string>} settings.visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETSETTING
- * @param {number} settings.depth $COMMENT#JSDOC#PARAMS#DEPTHSETTING
- * @param {number} settings.maxDepth $COMMENT#JSDOC#PARAMS#MAXDEPTHSETTING
- * @returns $COMMENT#JSDOC#RETURNS#MAKEFINDALLIMPORTSOPTIONS
+ * Makes the options of the next round of `findAllImports`. (Given that they are required, they are no longer "options" per se and are therefore considered here as "settings".)
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.currentDir The directory containing the import path currently being addressed.
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns The options object of the next round of `findAllImports`.
  */
 export const makeFindAllImportsOptions = ({
   cwd,
@@ -221,10 +221,10 @@ export const makeFindAllImportsOptions = ({
 /* visitedSetHasPreviousVisit */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#VISITEDSETHASPREVIOUSVISIT
- * @param {Set<string>} visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETOPTION
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
- * @returns $COMMENT#JSDOC#RETURNS#VISITEDSETHASPREVIOUSVISIT
+ * Tells if the current file path has already been visited within the current recursion.
+ * @param {Set<string>} visitedSet The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @returns `true` if the file path has been visited before, `false` if it hasn't.
  */
 export const visitedSetHasPreviousVisit = (visitedSet, filePath) =>
   visitedSet.has(filePath);
@@ -232,9 +232,9 @@ export const visitedSetHasPreviousVisit = (visitedSet, filePath) =>
 /* nodeIsImportDeclaration */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#NODEISIMPORTDECLARATION
- * @param {ASTBodyNode} node $COMMENT#JSDOC#PARAMS#NODE
- * @returns $COMMENT#JSDOC#RETURNS#NODEISIMPORTDECLARATION
+ * Tells if the node being walked through corresponds to an ES Module import.
+ * @param {ASTBodyNode} node The current node of the current file path's AST (Abstract Syntax Tree).
+ * @returns `true` if the node is an `import`, `false` if it isn't.
  */
 export const nodeIsImportDeclaration = (node) =>
   node.type === "ImportDeclaration";
@@ -242,9 +242,9 @@ export const nodeIsImportDeclaration = (node) =>
 /* nodeIsRequireCall */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#NODEISREQUIRECALL
- * @param {ASTBodyNode} node $COMMENT#JSDOC#PARAMS#NODE
- * @returns $COMMENT#JSDOC#RETURNS#NODEISREQUIRECALL
+ * Tells if the node being walked through corresponds to a CommonJS require.
+ * @param {ASTBodyNode} node The current node of the current file path's AST (Abstract Syntax Tree).
+ * @returns `true` if the node is a `require`, `false` if it isn't.
  */
 export const nodeIsRequireCall = (node) =>
   node.type === "ExpressionStatement" &&
