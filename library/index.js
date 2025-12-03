@@ -24,15 +24,15 @@ import {
 /* findAllImports */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#PROCESSIMPORT
- * @param {string} importPath $COMMENT#JSDOC#PARAMS#IMPORTPATH
- * @param {Object} settings $COMMENT#JSDOC#PARAMS#SETTINGS
- * @param {string} settings.currentDir $COMMENT#JSDOC#PARAMS#CURRENTDIRSETTING
- * @param {string} settings.cwd $COMMENT#JSDOC#PARAMS#CWDSETTING
- * @param {Set<string>} settings.visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETSETTING
- * @param {number} settings.depth $COMMENT#JSDOC#PARAMS#DEPTHSETTING
- * @param {number} settings.maxDepth $COMMENT#JSDOC#PARAMS#MAXDEPTHSETTING
- * @returns $COMMENT#JSDOC#RETURNS#PROCESSIMPORT
+ * Processes recursively and resolves a single import path. (Unlike `findAllImports`, here `currentDir`, `cwd`, `visitedSet`, `depth`, and `maxDepth` aren't options because they are mandatory and not pre-parameterized.)
+ * @param {string} importPath The import path currently being addressed.
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.currentDir The directory containing the import path currently being addressed.
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns The results of the embedded round of `findAllImports`, since `findAllImports`'s recursion happens within `processImport`.
  */
 const processImport = (
   importPath,
@@ -60,14 +60,14 @@ const processImport = (
 };
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#FINDALLIMPORTS
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
- * @param {Object} options $COMMENT#JSDOC#PARAMS#OPTIONS
- * @param {string} [options.cwd] $COMMENT#JSDOC#PARAMS#CWDOPTION
- * @param {Set<string>} [options.visitedSet] $COMMENT#JSDOC#PARAMS#VISITEDSETOPTION
- * @param {number} [options.depth] $COMMENT#JSDOC#PARAMS#DEPTHOPTION
- * @param {number} [options.maxDepth] $COMMENT#JSDOC#PARAMS#MAXDEPTHOPTION
- * @returns $COMMENT#JSDOC#RETURNS#FINDALLIMPORTS
+ * Finds all import paths recursively related to a given file path.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {Object} options The additional options as follows:
+ * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
+ * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {number} [options.depth] The current depth of the recursion, instantiated at `0` by default.
+ * @param {number} [options.maxDepth] The maximum depth allowed for the recursion, instantiated at `100` by default.
+ * @returns The complete set of strings of import paths recursively related to the given file path in a success object (`success: true`). Errors are bubbled up during failures in a failure object (`success: false`).
  */
 export const findAllImports = (
   filePath,
@@ -141,16 +141,16 @@ export const findAllImports = (
 /* findAllImportsWithCallbackSync */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#PROCESSIMPORT
- * @param {string} importPath $COMMENT#JSDOC#PARAMS#IMPORTPATH
- * @param {SynchronousCallbackConfig} callbackConfig $COMMENT#JSDOC#PARAMS#CALLBACKCONFIGSYNCSHORT
- * @param {Object} settings $COMMENT#JSDOC#PARAMS#SETTINGS
- * @param {string} settings.currentDir $COMMENT#JSDOC#PARAMS#CURRENTDIRSETTING
- * @param {string} settings.cwd $COMMENT#JSDOC#PARAMS#CWDSETTING
- * @param {Set<string>} settings.visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETSETTING
- * @param {number} settings.depth $COMMENT#JSDOC#PARAMS#DEPTHSETTING
- * @param {number} settings.maxDepth $COMMENT#JSDOC#PARAMS#MAXDEPTHSETTING
- * @returns $COMMENT#JSDOC#RETURNS#PROCESSIMPORT
+ * Processes recursively and resolves a single import path. (Unlike `findAllImports`, here `currentDir`, `cwd`, `visitedSet`, `depth`, and `maxDepth` aren't options because they are mandatory and not pre-parameterized.)
+ * @param {string} importPath The import path currently being addressed.
+ * @param {SynchronousCallbackConfig} callbackConfig The configuration of a synchronous-only callback function provided to `findAllImportsWithCallbackSync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties.
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.currentDir The directory containing the import path currently being addressed.
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns The results of the embedded round of `findAllImports`, since `findAllImports`'s recursion happens within `processImport`.
  */
 const processImportWithCallbackSync = (
   importPath,
@@ -189,15 +189,15 @@ const processImportWithCallbackSync = (
 };
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#FINDALLIMPORTSWITHCALLBACKSYNC
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
- * @param {SynchronousCallbackConfig} callbackConfig $COMMENT#JSDOC#PARAMS#CALLBACKCONFIGSYNCLONG
- * @param {Object} options $COMMENT#JSDOC#PARAMS#OPTIONS
- * @param {string} [options.cwd] $COMMENT#JSDOC#PARAMS#CWDOPTION
- * @param {Set<string>} [options.visitedSet] $COMMENT#JSDOC#PARAMS#VISITEDSETOPTION
- * @param {number} [options.depth] $COMMENT#JSDOC#PARAMS#DEPTHOPTION
- * @param {number} [options.maxDepth] $COMMENT#JSDOC#PARAMS#MAXDEPTHOPTION
- * @returns $COMMENT#JSDOC#RETURNS#FINDALLIMPORTS
+ * Finds all import paths recursively related to a given file path, with a given callback function running on every file path encountered, synchronously.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {SynchronousCallbackConfig} callbackConfig The configuration of a synchronous-only callback function provided to `findAllImportsWithCallbackSync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties. The callback runs on every file path found, before `findAllImportsWithCallbackSync`'s recursion, and accesses three arguments in the following order: `filePath` which is the current file's path, `sourceCode` which is the current file's SourceCode object, and `accumulator` which is the accumulator for the callback through the recursion.
+ * @param {Object} options The additional options as follows:
+ * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
+ * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {number} [options.depth] The current depth of the recursion, instantiated at `0` by default.
+ * @param {number} [options.maxDepth] The maximum depth allowed for the recursion, instantiated at `100` by default.
+ * @returns The complete set of strings of import paths recursively related to the given file path in a success object (`success: true`). Errors are bubbled up during failures in a failure object (`success: false`).
  */
 export const findAllImportsWithCallbackSync = (
   filePath,
@@ -297,16 +297,16 @@ export const findAllImportsWithCallbackSync = (
 /* findAllImportsWithCallbackAsync */
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#PROCESSIMPORT
- * @param {string} importPath $COMMENT#JSDOC#PARAMS#IMPORTPATH
- * @param {AsynchronousCallbackConfig} callbackConfig $COMMENT#JSDOC#PARAMS#CALLBACKCONFIGASYNCSHORT
- * @param {Object} settings $COMMENT#JSDOC#PARAMS#SETTINGS
- * @param {string} settings.currentDir $COMMENT#JSDOC#PARAMS#CURRENTDIRSETTING
- * @param {string} settings.cwd $COMMENT#JSDOC#PARAMS#CWDSETTING
- * @param {Set<string>} settings.visitedSet $COMMENT#JSDOC#PARAMS#VISITEDSETSETTING
- * @param {number} settings.depth $COMMENT#JSDOC#PARAMS#DEPTHSETTING
- * @param {number} settings.maxDepth $COMMENT#JSDOC#PARAMS#MAXDEPTHSETTING
- * @returns $COMMENT#JSDOC#RETURNS#PROCESSIMPORT
+ * Processes recursively and resolves a single import path. (Unlike `findAllImports`, here `currentDir`, `cwd`, `visitedSet`, `depth`, and `maxDepth` aren't options because they are mandatory and not pre-parameterized.)
+ * @param {string} importPath The import path currently being addressed.
+ * @param {AsynchronousCallbackConfig} callbackConfig The configuration of an asynchronous-only callback function provided to `findAllImportsWithCallbackAsync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties.
+ * @param {Object} settings The required settings as follows:
+ * @param {string} settings.currentDir The directory containing the import path currently being addressed.
+ * @param {string} settings.cwd The current working directory.
+ * @param {Set<string>} settings.visitedSet The set of strings tracking the import paths that have already been visited.
+ * @param {number} settings.depth The current depth of the recursion.
+ * @param {number} settings.maxDepth The maximum depth allowed for the recursion.
+ * @returns The results of the embedded round of `findAllImports`, since `findAllImports`'s recursion happens within `processImport`.
  */
 const processImportWithCallbackAsync = async (
   importPath,
@@ -345,15 +345,15 @@ const processImportWithCallbackAsync = async (
 };
 
 /**
- * $COMMENT#JSDOC#DEFINITIONS#FINDALLIMPORTSWITHCALLBACKASYNC
- * @param {string} filePath $COMMENT#JSDOC#PARAMS#FILEPATH
- * @param {AsynchronousCallbackConfig} callbackConfig $COMMENT#JSDOC#PARAMS#CALLBACKCONFIGASYNCLONG
- * @param {Object} options $COMMENT#JSDOC#PARAMS#OPTIONS
- * @param {string} [options.cwd] $COMMENT#JSDOC#PARAMS#CWDOPTION
- * @param {Set<string>} [options.visitedSet] $COMMENT#JSDOC#PARAMS#VISITEDSETOPTION
- * @param {number} [options.depth] $COMMENT#JSDOC#PARAMS#DEPTHOPTION
- * @param {number} [options.maxDepth] $COMMENT#JSDOC#PARAMS#MAXDEPTHOPTION
- * @returns $COMMENT#JSDOC#RETURNS#FINDALLIMPORTS
+ * Finds all import paths recursively related to a given file path, with a given callback function running on every file path encountered, asynchronously.
+ * @param {string} filePath The absolute path of the file whose imports are being recursively found, such as that of a project's `comments.config.js` file.
+ * @param {AsynchronousCallbackConfig} callbackConfig The configuration of an asynchronous-only callback function provided to `findAllImportsWithCallbackAsync`, with the callback itself (`callbackConfig.callback`) and its accumulator (`callbackConfig.accumulator`) as properties. The callback runs on every file path found, before `findAllImportsWithCallbackAsync`'s recursion, and accesses three arguments in the following order: `filePath` which is the current file's path, `sourceCode` which is the current file's SourceCode object, and `accumulator` which is the accumulator for the callback through the recursion.
+ * @param {Object} options The additional options as follows:
+ * @param {string} [options.cwd] The current working directory, set as `process.cwd()` by default.
+ * @param {Set<string>} [options.visitedSet] The set of strings tracking the import paths that have already been visited, instantiated as a `new Set()` by default.
+ * @param {number} [options.depth] The current depth of the recursion, instantiated at `0` by default.
+ * @param {number} [options.maxDepth] The maximum depth allowed for the recursion, instantiated at `100` by default.
+ * @returns The complete set of strings of import paths recursively related to the given file path in a success object (`success: true`). Errors are bubbled up during failures in a failure object (`success: false`).
  */
 export const findAllImportsWithCallbackAsync = async (
   filePath,
