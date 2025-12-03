@@ -23,6 +23,8 @@ const data = {
         "Tells if the current file path has already been visited within the current recursion." /* $COMMENT#JSDOC#DEFINITIONS#VISITEDSETHASPREVIOUSVISIT */,
       nodeIsImportDeclaration:
         "Tells if the node being walked through corresponds to an ES Module import." /* $COMMENT#JSDOC#DEFINITIONS#NODEISIMPORTDECLARATION */,
+      nodeIsImportExpression:
+        "Tells if the node being walked through corresponds to a dynamic import." /* $COMMENT#JSDOC#DEFINITIONS#NODEISIMPORTEXPRESSION */,
       nodeIsRequireCall:
         "Tells if the node being walked through corresponds to a CommonJS require." /* $COMMENT#JSDOC#DEFINITIONS#NODEISREQUIRECALL */,
       findAllImportsWithCallbackSync:
@@ -94,6 +96,8 @@ const data = {
         "`true` if the file path has been visited before, `false` if it hasn't." /* $COMMENT#JSDOC#RETURNS#VISITEDSETHASPREVIOUSVISIT */,
       nodeIsImportDeclaration:
         "`true` if the node is an `import`, `false` if it isn't." /* $COMMENT#JSDOC#RETURNS#NODEISIMPORTDECLARATION */,
+      nodeIsImportExpression:
+        "`true` if the node is an `import()`, `false` if it isn't." /* $COMMENT#JSDOC#RETURNS#NODEISIMPORTEXPRESSION */,
       nodeIsRequireCall:
         "`true` if the node is a `require`, `false` if it isn't." /* $COMMENT#JSDOC#RETURNS#NODEISREQUIRECALL */,
     }),

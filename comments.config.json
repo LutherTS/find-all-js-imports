@@ -45,6 +45,10 @@
         "value": "Tells if the node being walked through corresponds to an ES Module import.",
         "key": "JSDOC#DEFINITIONS#NODEISIMPORTDECLARATION"
       },
+      "nodeIsImportExpression": {
+        "value": "Tells if the node being walked through corresponds to a dynamic import.",
+        "key": "JSDOC#DEFINITIONS#NODEISIMPORTEXPRESSION"
+      },
       "nodeIsRequireCall": {
         "value": "Tells if the node being walked through corresponds to a CommonJS require.",
         "key": "JSDOC#DEFINITIONS#NODEISREQUIRECALL"
@@ -184,6 +188,10 @@
       "nodeIsImportDeclaration": {
         "value": "`true` if the node is an `import`, `false` if it isn't.",
         "key": "JSDOC#RETURNS#NODEISIMPORTDECLARATION"
+      },
+      "nodeIsImportExpression": {
+        "value": "`true` if the node is an `import()`, `false` if it isn't.",
+        "key": "JSDOC#RETURNS#NODEISIMPORTEXPRESSION"
       },
       "nodeIsRequireCall": {
         "value": "`true` if the node is a `require`, `false` if it isn't.",

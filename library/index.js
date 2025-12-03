@@ -10,6 +10,7 @@ import {
   makeFindAllImportsOptions,
   visitedSetHasPreviousVisit,
   nodeIsImportDeclaration,
+  nodeIsImportExpression,
   nodeIsRequireCall,
 } from "./utilities/helpers.js";
 
@@ -108,6 +109,15 @@ export const findAllImports = (
   for (const node of sourceCode.ast.body) {
     // ES Modules (import x from 'y')
     if (nodeIsImportDeclaration(node)) {
+      const processImportResults = processImport(
+        node.source.value,
+        processImportSettings
+      );
+      if (!processImportResults.success) return processImportResults;
+    }
+
+    // now with dynamic imports since same flow as ImportDeclaration
+    if (nodeIsImportExpression(node)) {
       const processImportResults = processImport(
         node.source.value,
         processImportSettings
@@ -252,6 +262,15 @@ export const findAllImportsWithCallbackSync = (
       const processImportResults = processImportWithCallbackSync(
         node.source.value,
         callbackConfig,
+        processImportSettings
+      );
+      if (!processImportResults.success) return processImportResults;
+    }
+
+    // now with dynamic imports since same flow as ImportDeclaration
+    if (nodeIsImportExpression(node)) {
+      const processImportResults = processImportWithCallbackSync(
+        node.source.value,
         processImportSettings
       );
       if (!processImportResults.success) return processImportResults;
@@ -403,6 +422,15 @@ export const findAllImportsWithCallbackAsync = async (
       const processImportResults = await processImportWithCallbackAsync(
         node.source.value,
         callbackConfig,
+        processImportSettings
+      );
+      if (!processImportResults.success) return processImportResults;
+    }
+
+    // now with dynamic imports since same flow as ImportDeclaration
+    if (nodeIsImportExpression(node)) {
+      const processImportResults = await processImportWithCallbackAsync(
+        node.source.value,
         processImportSettings
       );
       if (!processImportResults.success) return processImportResults;

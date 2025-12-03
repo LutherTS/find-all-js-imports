@@ -239,6 +239,16 @@ export const visitedSetHasPreviousVisit = (visitedSet, filePath) =>
 export const nodeIsImportDeclaration = (node) =>
   node.type === "ImportDeclaration";
 
+/* nodeIsImportExpression */
+
+/**
+ * $COMMENT#JSDOC#DEFINITIONS#NODEISIMPORTEXPRESSION
+ * @param {ASTBodyNode} node $COMMENT#JSDOC#PARAMS#NODE
+ * @returns $COMMENT#JSDOC#RETURNS#NODEISIMPORTEXPRESSION
+ */
+export const nodeIsImportExpression = (node) =>
+  node.type === "ImportExpression";
+
 /* nodeIsRequireCall */
 
 /**
