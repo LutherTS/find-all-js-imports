@@ -16,6 +16,7 @@
     "url": "git+https://github.com/LutherTS/find-all-js-imports.git"
   },
   "dependencies": {
+    "find-up": "^8.0.0",
     "get-sourcecode-from-file-path": "^1.1.2",
     "resolve-importing-path": "^1.0.3",
     "zod": "^4.0.0"

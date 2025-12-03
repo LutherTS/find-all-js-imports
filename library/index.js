@@ -1,4 +1,5 @@
 import { resolveImportingPath } from "resolve-importing-path";
+import { findUpSync } from "find-up";
 
 import { successTrue } from "./constants/bases.js";
 import {
@@ -39,7 +40,13 @@ const processImport = (
   { currentDir, cwd, visitedSet, depth, maxDepth }
 ) => {
   // Resolves the provided import path.
-  const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
+  const resolvedPath = resolveImportingPath(
+    currentDir,
+    importPath,
+    findUpSync("tsconfig.json", {
+      cwd: currentDir,
+    }) ?? cwd
+  );
   // Returns early to skip processing on unresolved paths.
   if (!resolvedPath) return { ...successTrue, visitedSet };
 
@@ -158,7 +165,13 @@ const processImportWithCallbackSync = (
   { currentDir, cwd, visitedSet, depth, maxDepth }
 ) => {
   // Resolves the provided import path.
-  const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
+  const resolvedPath = resolveImportingPath(
+    currentDir,
+    importPath,
+    findUpSync("tsconfig.json", {
+      cwd: currentDir,
+    }) ?? cwd
+  );
   // Returns early to skip processing on unresolved paths.
   if (!resolvedPath)
     return {
@@ -314,7 +327,13 @@ const processImportWithCallbackAsync = async (
   { currentDir, cwd, visitedSet, depth, maxDepth }
 ) => {
   // Resolves the provided import path.
-  const resolvedPath = resolveImportingPath(currentDir, importPath, cwd);
+  const resolvedPath = resolveImportingPath(
+    currentDir,
+    importPath,
+    findUpSync("tsconfig.json", {
+      cwd: currentDir,
+    }) ?? cwd
+  );
   // Returns early to skip processing on unresolved paths.
   if (!resolvedPath)
     return {
