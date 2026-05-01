@@ -1,4 +1,4 @@
-import { SourceCode } from "eslint";
+import { SourceCode as SourceCodeType } from "eslint";
 
 type FindAllImportsResults =
   | {
@@ -25,7 +25,7 @@ type SynchronousCallbackConfig = {
   callback: (
     filePath: string,
     sourceCode: SourceCode,
-    accumulator: unknown
+    accumulator: unknown,
   ) => void;
   accumulator: unknown;
 };
@@ -34,7 +34,7 @@ type AsynchronousCallbackConfig = {
   callback: (
     filePath: string,
     sourceCode: SourceCode,
-    accumulator: unknown
+    accumulator: unknown,
   ) => Promise<void>;
   accumulator: unknown;
 };
@@ -63,7 +63,7 @@ export const findAllImports: (
     visitedSet?: Set<string> | undefined;
     depth?: number | undefined;
     maxDepth?: number | undefined;
-  }
+  },
 ) =>
   | {
       success: false;
@@ -91,7 +91,7 @@ export const findAllImportsWithCallbackSync: (
     callback: (
       filePath: string,
       sourceCode: SourceCode,
-      accumulator: unknown
+      accumulator: unknown,
     ) => void;
     accumulator: unknown;
   },
@@ -105,7 +105,7 @@ export const findAllImportsWithCallbackSync: (
     visitedSet?: Set<string> | undefined;
     depth?: number | undefined;
     maxDepth?: number | undefined;
-  }
+  },
 ) =>
   | {
       success: false;
@@ -134,7 +134,7 @@ export const findAllImportsWithCallbackAsync: (
     callback: (
       filePath: string,
       sourceCode: SourceCode,
-      accumulator: unknown
+      accumulator: unknown,
     ) => Promise<void>;
     accumulator: unknown;
   },
@@ -148,7 +148,7 @@ export const findAllImportsWithCallbackAsync: (
     visitedSet?: Set<string> | undefined;
     depth?: number | undefined;
     maxDepth?: number | undefined;
-  }
+  },
 ) => Promise<
   | {
       success: false;
@@ -164,4 +164,4 @@ export const findAllImportsWithCallbackAsync: (
 /**
  * $COMMENT#JSDOC#TYPES#SOURCECODE
  */
-export type SourceCode = SourceCode;
+export type SourceCode = SourceCodeType;
